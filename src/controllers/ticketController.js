@@ -60,6 +60,10 @@ const crearTicket = async (req, res) => {
       email
     });
 
+    // 👇 Declarada aquí arriba, con valor por defecto, para que SIEMPRE exista
+    // sin importar qué prioridad tenga el ticket ni si el bloque IA falla.
+    let trelloUrl = '';
+
     // 2. Clasificar con Gemini automáticamente
     try {
       const clasificacion = await clasificarTicket(nuevoTicket);
@@ -73,14 +77,15 @@ const crearTicket = async (req, res) => {
       nuevoTicket.respuestaIA = clasificacion.respuestaIA;
       nuevoTicket.estado = clasificacion.esPreguntaFrecuente ? 'resuelto' : 'en_proceso';
 
-      // 3. Si es urgente → crear tarjeta en Trello
-     if (nuevoTicket.prioridad === 'urgente') {
-  trelloUrl = await crearTarjetaTrello(nuevoTicket, process.env.TRELLO_LIST_URGENTE);
-  nuevoTicket.trelloUrl = trelloUrl;
-} else if (nuevoTicket.prioridad === 'alta') {
-  trelloUrl = await crearTarjetaTrello(nuevoTicket, process.env.TRELLO_LIST_ALTA);
-  nuevoTicket.trelloUrl = trelloUrl;
-}
+      // 3. Si es urgente o alta → crear tarjeta en Trello
+      if (nuevoTicket.prioridad === 'urgente') {
+        trelloUrl = await crearTarjetaTrello(nuevoTicket, process.env.TRELLO_LIST_URGENTE);
+        nuevoTicket.trelloUrl = trelloUrl;
+      } else if (nuevoTicket.prioridad === 'alta') {
+        trelloUrl = await crearTarjetaTrello(nuevoTicket, process.env.TRELLO_LIST_ALTA);
+        nuevoTicket.trelloUrl = trelloUrl;
+      }
+
       await nuevoTicket.save();
 
       // 4. Enviar UN solo email según el tipo
@@ -106,13 +111,15 @@ const crearTicket = async (req, res) => {
       });
 
     } catch (iaError) {
-  console.error('Error con IA:', iaError.message);
-  res.status(201).json({
-    success: true,
-    mensaje: '✅ Ticket creado exitosamente',
-    ticket: nuevoTicket
-  });
-}
+      console.error('Error con IA:', iaError.message);
+      // Si la IA falla, igual respondemos bien (trelloUrl ya existe como '')
+      res.status(201).json({
+        success: true,
+        mensaje: '✅ Ticket creado exitosamente',
+        trelloUrl,
+        ticket: nuevoTicket
+      });
+    }
 
   } catch (error) {
     res.status(500).json({
