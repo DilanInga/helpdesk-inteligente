@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Admin — Help Desk</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="nav-icon">🎫</span>
+      <span class="nav-title">Help Desk Inteligente</span>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">Crear Ticket</a>
+      <a href="ticket.html" class="nav-link">🔍 Mi Ticket</a>
+      <a href="admin.html" class="nav-link active">Panel Admin</a>
+    </div>
+  </nav>
+
+  <section class="admin-section">
+    <div class="admin-header">
+      <h1>📋 Panel de Administración</h1>
+      <div style="display:flex; gap:1rem;">
+        <button class="btn-refresh" onclick="cargarTickets()">🔄 Actualizar</button>
+        <button class="btn-refresh" onclick="cerrarSesion()" style="background:rgba(239,68,68,0.15); color:#ef4444; border-color:rgba(239,68,68,0.3);">🚪 Cerrar Sesión</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid" id="stats">
+      <div class="stat-card">
+        <div class="stat-number" id="total">—</div>
+        <div class="stat-label">Total Tickets</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="abiertos">—</div>
+        <div class="stat-label">Abiertos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="urgentes">—</div>
+        <div class="stat-label">Urgentes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="resueltos">—</div>
+        <div class="stat-label">Resueltos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="en-proceso">—</div>
+        <div class="stat-label">En Proceso</div>
+      </div>
+    </div>
+
+    <!-- GRAFICAS -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:2rem;">
+      <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:1.5rem;">
+        <h3 style="color:#f5c518; margin-bottom:1rem; font-size:0.95rem;">📊 Tickets por Prioridad</h3>
+        <canvas id="graficaPrioridad" height="200"></canvas>
+      </div>
+      <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:1.5rem;">
+        <h3 style="color:#f5c518; margin-bottom:1rem; font-size:0.95rem;">🏷️ Tickets por Categoría</h3>
+        <canvas id="graficaCategoria" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- TICKETS -->
+    <div class="tickets-grid" id="tickets-container">
+      <div class="loading">⏳ Cargando tickets...</div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>Help Desk Inteligente — Powered by IA 🤖 | Cloud Computing Project</p>
+  </footer>
+
+  <script>
+    const ADMIN_PASSWORD = 'helpdesk2026';
+    let graficaPrioridad = null;
+    let graficaCategoria = null;
+
+    function verificarAcceso() {
+      const acceso = sessionStorage.getItem('adminAcceso');
+      if (!acceso) {
+        const password = prompt('🔐 Ingresa la contraseña de administrador:');
+        if (password === ADMIN_PASSWORD) {
+          sessionStorage.setItem('adminAcceso', 'true');
+          cargarTickets();
+        } else if (password === null) {
+          window.location.href = 'index.html';
+        } else {
+          alert('❌ Contraseña incorrecta. Serás redirigido.');
+          window.location.href = 'index.html';
+        }
+      } else {
+        cargarTickets();
+      }
+    }
+
+    async function cargarTickets() {
+      const container = document.getElementById('tickets-container');
+      container.innerHTML = '<div class="loading">⏳ Cargando tickets...</div>';
+
+      try {
+        const response = await fetch('/api/tickets');
+        const data = await response.json();
+        if (!data.success) throw new Error('Error al cargar');
+
+        const tickets = data.tickets;
+
+        // Estadísticas
+        document.getElementById('total').textContent = tickets.length;
+        document.getElementById('abiertos').textContent = tickets.filter(t => t.estado === 'abierto').length;
+        document.getElementById('urgentes').textContent = tickets.filter(t => t.prioridad === 'urgente').length;
+        document.getElementById('resueltos').textContent = tickets.filter(t => t.estado === 'resuelto').length;
+        document.getElementById('en-proceso').textContent = tickets.filter(t => t.estado === 'en_proceso').length;
+
+        // Gráfica prioridad
+        const prioridades = { baja: 0, normal: 0, alta: 0, urgente: 0 };
+        tickets.forEach(t => { if (prioridades[t.prioridad] !== undefined) prioridades[t.prioridad]++; });
+
+        if (graficaPrioridad) graficaPrioridad.destroy();
+        graficaPrioridad = new Chart(document.getElementById('graficaPrioridad'), {
+          type: 'doughnut',
+          data: {
+            labels: ['Baja', 'Normal', 'Alta', 'Urgente'],
+            datasets: [{
+              data: [prioridades.baja, prioridades.normal, prioridades.alta, prioridades.urgente],
+              backgroundColor: ['#22c55e', '#eab308', '#f97316', '#ef4444'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            plugins: {
+              legend: { labels: { color: '#ffffff', font: { size: 12 } } }
+            }
+          }
+        });
+
+        // Gráfica categoría
+        const categorias = {};
+        tickets.forEach(t => {
+          if (t.categoria) categorias[t.categoria] = (categorias[t.categoria] || 0) + 1;
+        });
+
+        if (graficaCategoria) graficaCategoria.destroy();
+        graficaCategoria = new Chart(document.getElementById('graficaCategoria'), {
+          type: 'bar',
+          data: {
+            labels: Object.keys(categorias),
+            datasets: [{
+              label: 'Tickets',
+              data: Object.values(categorias),
+              backgroundColor: 'rgba(245,197,24,0.6)',
+              borderColor: '#f5c518',
+              borderWidth: 1,
+              borderRadius: 6
+            }]
+          },
+          options: {
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              x: { ticks: { color: '#ffffff' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+              y: { ticks: { color: '#ffffff', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+          }
+        });
+
+        if (tickets.length === 0) {
+          container.innerHTML = '<div class="loading">📭 No hay tickets aún</div>';
+          return;
+        }
+
+        container.innerHTML = tickets.map(ticket => `
+          <div class="ticket-card">
+            <div class="ticket-card-header">
+              <div class="ticket-titulo">${ticket.titulo}</div>
+              <div class="ticket-badges">
+                <span class="priority-badge priority-${ticket.prioridad}">${ticket.prioridad.toUpperCase()}</span>
+                <span class="status-badge">${ticket.estado}</span>
+              </div>
+            </div>
+            <div class="ticket-descripcion">${ticket.descripcion}</div>
+            ${ticket.respuestaIA ? `
+              <div style="background:rgba(245,197,24,0.08); border-left:3px solid #f5c518; padding:0.8rem; border-radius:8px; margin:0.5rem 0; font-size:0.85rem; color:rgba(255,255,255,0.7);">
+                🤖 <strong>IA:</strong> ${ticket.respuestaIA}
+              </div>
+            ` : ''}
+            ${ticket.trelloUrl ? `
+              <div style="margin:0.5rem 0;">
+                <a href="${ticket.trelloUrl}" target="_blank" style="color:#f5c518; font-size:0.85rem;">📋 Ver en Trello</a>
+              </div>
+            ` : ''}
+            <div class="ticket-meta">
+              <span>📧 ${ticket.email}</span>
+              <span>🏷️ ${ticket.categoria}</span>
+              <span>👥 ${ticket.equipo}</span>
+              <span>📅 ${new Date(ticket.createdAt).toLocaleDateString('es-ES')}</span>
+            </div>
+            ${ticket.estado !== 'resuelto' ? `
+              <div style="margin-top:0.8rem;">
+                <button onclick="resolverTicket('${ticket._id}')" style="background:rgba(34,197,94,0.15); color:#22c55e; border:1px solid rgba(34,197,94,0.3); padding:0.4rem 1rem; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:600;">
+                  ✅ Marcar como Resuelto
+                </button>
+              </div>
+            ` : ''}
+          </div>
+        `).join('');
+
+      } catch (error) {
+        container.innerHTML = '<div class="loading">❌ Error al cargar los tickets</div>';
+      }
+    }
+
+    async function resolverTicket(id) {
+      try {
+        const response = await fetch(`/api/tickets/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ estado: 'resuelto' })
+        });
+        const data = await response.json();
+        if (data.success) {
+          cargarTickets();
+        }
+      } catch (error) {
+        alert('❌ Error al actualizar el ticket');
+      }
+    }
+
+    function cerrarSesion() {
+      sessionStorage.removeItem('adminAcceso');
+      window.location.href = 'index.html';
+    }
+
+    verificarAcceso();
+  </script>
+</body>
+</html>

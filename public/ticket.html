@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estado del Ticket — Help Desk</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="nav-icon">🎫</span>
+      <span class="nav-title">Help Desk Inteligente</span>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">Crear Ticket</a>
+      <a href="admin.html" class="nav-link">Panel Admin</a>
+    </div>
+  </nav>
+
+  <section class="form-section">
+    <div class="form-container">
+      <div class="form-header">
+        <h2>🔍 Estado de tu Ticket</h2>
+        <p>Ingresa el ID de tu ticket para ver su estado actual</p>
+      </div>
+      <div class="form-body">
+        <div class="form-group">
+          <label for="ticketId">ID del Ticket</label>
+          <input type="text" id="ticketId" placeholder="Ej: 6a4d97c13aafaf8c3870bbaa">
+        </div>
+        <button class="btn-submit" onclick="buscarTicket()">
+          <span>🔍</span>
+          <span>Buscar Ticket</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="resultado-ticket" style="margin-top:1.5rem;"></div>
+  </section>
+
+  <footer class="footer">
+    <p>Help Desk Inteligente — Powered by IA 🤖 | Cloud Computing Project</p>
+  </footer>
+
+  <script>
+    // Si viene con ID en la URL lo busca automáticamente
+    const params = new URLSearchParams(window.location.search);
+    const idUrl = params.get('id');
+    if (idUrl) {
+      document.getElementById('ticketId').value = idUrl;
+      buscarTicket();
+    }
+
+    async function buscarTicket() {
+      const id = document.getElementById('ticketId').value.trim();
+      const resultado = document.getElementById('resultado-ticket');
+
+      if (!id) {
+        resultado.innerHTML = `<div class="result-error"><div class="result-title">⚠️ Ingresa un ID válido</div></div>`;
+        return;
+      }
+
+      resultado.innerHTML = `<div class="result-success"><div class="result-title">⏳ Buscando...</div></div>`;
+
+      try {
+        const response = await fetch(`/api/tickets/${id}`);
+        const data = await response.json();
+
+        if (!data.success) {
+          resultado.innerHTML = `<div class="result-error"><div class="result-title">❌ Ticket no encontrado</div><div class="result-detail">Verifica que el ID sea correcto.</div></div>`;
+          return;
+        }
+
+        const ticket = data.ticket;
+        const colores = {
+          baja: '#22c55e',
+          normal: '#eab308',
+          alta: '#f97316',
+          urgente: '#ef4444'
+        };
+
+        const estadoIconos = {
+          abierto: '🟡',
+          en_proceso: '🔵',
+          resuelto: '✅',
+          cerrado: '⚫'
+        };
+
+        resultado.innerHTML = `
+          <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px; overflow:hidden;">
+            
+            <div style="background:rgba(245,197,24,0.1); border-bottom:1px solid rgba(245,197,24,0.2); padding:1.5rem 2rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                <h2 style="color:#f5c518; font-size:1.2rem;">${ticket.titulo}</h2>
+                <div style="display:flex; gap:0.5rem;">
+                  <span style="background:${colores[ticket.prioridad]}22; color:${colores[ticket.prioridad]}; border:1px solid ${colores[ticket.prioridad]}44; padding:0.2rem 0.8rem; border-radius:50px; font-size:0.75rem; font-weight:700;">
+                    ${ticket.prioridad.toUpperCase()}
+                  </span>
+                  <span style="background:rgba(99,102,241,0.2); color:#818cf8; border:1px solid rgba(99,102,241,0.3); padding:0.2rem 0.8rem; border-radius:50px; font-size:0.75rem; font-weight:600;">
+                    ${estadoIconos[ticket.estado]} ${ticket.estado.replace('_', ' ')}
+                  </span>
+                </div>
+              </div>
+              <div style="font-family:monospace; font-size:0.8rem; color:rgba(255,255,255,0.4); margin-top:0.5rem;">ID: ${ticket._id}</div>
+            </div>
+
+            <div style="padding:2rem; display:flex; flex-direction:column; gap:1.2rem;">
+              
+              <div>
+                <div style="font-size:0.8rem; color:rgba(255,255,255,0.4); margin-bottom:0.3rem;">📄 Descripción</div>
+                <div style="font-size:0.95rem; color:rgba(255,255,255,0.8);">${ticket.descripcion}</div>
+              </div>
+
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:1rem;">
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:0.8rem;">
+                  <div style="font-size:0.75rem; color:rgba(255,255,255,0.4);">🏷️ Categoría</div>
+                  <div style="font-weight:600; margin-top:0.3rem;">${ticket.categoria}</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:0.8rem;">
+                  <div style="font-size:0.75rem; color:rgba(255,255,255,0.4);">👥 Equipo</div>
+                  <div style="font-weight:600; margin-top:0.3rem;">${ticket.equipo}</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:0.8rem;">
+                  <div style="font-size:0.75rem; color:rgba(255,255,255,0.4);">📅 Creado</div>
+                  <div style="font-weight:600; margin-top:0.3rem;">${new Date(ticket.createdAt).toLocaleDateString('es-ES')}</div>
+                </div>
+              </div>
+
+              ${ticket.respuestaIA ? `
+                <div style="background:rgba(245,197,24,0.08); border-left:3px solid #f5c518; padding:1rem; border-radius:8px;">
+                  <div style="font-size:0.8rem; color:#f5c518; font-weight:600; margin-bottom:0.5rem;">🤖 Análisis de la IA</div>
+                  <div style="font-size:0.9rem; color:rgba(255,255,255,0.7); line-height:1.6;">${ticket.respuestaIA}</div>
+                </div>
+              ` : ''}
+
+              ${ticket.estado === 'resuelto' ? `
+                <div style="background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); padding:1rem; border-radius:10px; text-align:center;">
+                  <div style="font-size:1.2rem;">✅</div>
+                  <div style="font-weight:700; color:#22c55e; margin-top:0.3rem;">Ticket Resuelto</div>
+                  <div style="font-size:0.85rem; color:rgba(255,255,255,0.5); margin-top:0.2rem;">Tu problema ha sido atendido</div>
+                </div>
+              ` : `
+                <div style="background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.3); padding:1rem; border-radius:10px; text-align:center;">
+                  <div style="font-size:1.2rem;">⏳</div>
+                  <div style="font-weight:700; color:#818cf8; margin-top:0.3rem;">En Atención</div>
+                  <div style="font-size:0.85rem; color:rgba(255,255,255,0.5); margin-top:0.2rem;">Un agente está revisando tu caso</div>
+                </div>
+              `}
+
+            </div>
+          </div>
+        `;
+
+      } catch (error) {
+        resultado.innerHTML = `<div class="result-error"><div class="result-title">❌ Error de conexión</div></div>`;
+      }
+    }
+  </script>
+</body>
+</html>

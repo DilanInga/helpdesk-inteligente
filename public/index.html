@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Help Desk Inteligente</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="nav-icon">🎫</span>
+      <span class="nav-title">Help Desk Inteligente</span>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link active">Crear Ticket</a>
+      <a href="admin.html" class="nav-link">Panel Admin</a>
+      <a href="ticket.html" class="nav-link">🔍 Mi Ticket</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-tag">☁️ Cloud Computing + IA</div>
+    <h1 class="hero-title">¿Necesitas ayuda? <span class="highlight">Estamos aquí</span></h1>
+    <p class="hero-subtitle">Describe tu problema y nuestra IA lo clasificará, priorizará y asignará automáticamente al equipo correcto.</p>
+    <div class="hero-badges">
+      <span class="badge">🤖 Gemini IA</span>
+      <span class="badge">⚡ Respuesta Inmediata</span>
+      <span class="badge">☁️ 100% en la Nube</span>
+      <span class="badge">🎫 Trello Integration</span>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-number">1,500</span>
+        <span class="hero-stat-label">Tickets/día</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-number">< 1s</span>
+        <span class="hero-stat-label">Clasificación IA</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-number">100%</span>
+        <span class="hero-stat-label">Gratuito</span>
+      </div>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="hero-card">
+      <div class="hero-card-header">🎫 Ticket Entrante</div>
+      <div class="hero-card-body">
+        <div class="hero-card-row">📝 Servidor caído en producción</div>
+        <div class="hero-card-row">👤 usuario@empresa.com</div>
+      </div>
+      <div class="hero-card-footer">
+        <span>⏳ Analizando con IA...</span>
+      </div>
+    </div>
+    <div class="hero-arrow">↓</div>
+    <div class="hero-card hero-card-result">
+      <div class="hero-card-header">🤖 Resultado IA</div>
+      <div class="hero-card-body">
+        <div class="hero-card-row">🔴 Prioridad: URGENTE</div>
+        <div class="hero-card-row">🏷️ Categoría: Infraestructura</div>
+        <div class="hero-card-row">👥 Equipo: DevOps</div>
+        <div class="hero-card-row">📋 Tarjeta creada en Trello</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+  <!-- FORMULARIO -->
+  <section class="form-section">
+    <div class="form-container">
+      <div class="form-header">
+        <h2>Crear Nuevo Ticket</h2>
+        <p>Completa el formulario y la IA se encargará del resto</p>
+      </div>
+
+      <div class="form-body">
+        <!-- Título -->
+        <div class="form-group">
+          <label for="titulo">📝 Título del problema</label>
+          <input 
+            type="text" 
+            id="titulo" 
+            placeholder="Ej: Mi impresora no imprime"
+            maxlength="100"
+          >
+          <span class="form-hint">Describe brevemente tu problema</span>
+        </div>
+
+        <!-- Descripción -->
+        <div class="form-group">
+          <label for="descripcion">📄 Descripción detallada</label>
+          <textarea 
+            id="descripcion" 
+            placeholder="Explica con detalle qué está pasando, desde cuándo ocurre y qué has intentado..."
+            rows="5"
+          ></textarea>
+        </div>
+
+        <!-- Prioridad y Email -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="prioridad">🚨 Prioridad</label>
+            <select id="prioridad">
+              <option value="baja">🟢 Baja</option>
+              <option value="normal" selected>🟡 Normal</option>
+              <option value="alta">🟠 Alta</option>
+              <option value="urgente">🔴 Urgente</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="email">📧 Tu email</label>
+            <input 
+              type="email" 
+              id="email" 
+              placeholder="tucorreo@empresa.com"
+            >
+          </div>
+        </div>
+
+        <!-- Botón -->
+        <button class="btn-submit" onclick="crearTicket()">
+          <span class="btn-icon">🚀</span>
+          <span class="btn-text">Enviar Ticket</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- RESULTADO -->
+    <div class="result-container" id="resultado" style="display:none;">
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p>Help Desk Inteligente — Powered by IA 🤖 | Cloud Computing Project</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
