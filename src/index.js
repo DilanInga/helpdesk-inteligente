@@ -9,26 +9,10 @@ dotenv.config();
 
 const app = express();
 
-// Middlewares
+// Middlewares base
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
-
-// Rutas
-const ticketRoutes = require('./routes/tickets');
-app.use('/api/tickets', ticketRoutes);
-
-// Ruta de prueba para verificar que el servidor y la BD funcionan
-app.get('/api/health', (req, res) => {
-  const estados = ['desconectado', 'conectado', 'conectando', 'desconectando'];
-  res.json({
-    status: 'OK',
-    mensaje: 'Help Desk Inteligente funcionando correctamente',
-    dbState: mongoose.connection.readyState,
-    dbEstadoTexto: estados[mongoose.connection.readyState],
-    fecha: new Date().toISOString()
-  });
-});
 
 // --- Conexión a MongoDB cacheada, apta para entorno serverless ---
 let conexionPromesa = null;
@@ -53,7 +37,9 @@ function conectarDB() {
   return conexionPromesa;
 }
 
-// Middleware: asegura que haya conexión a la BD antes de atender cualquier /api
+// 👇 IMPORTANTE: este middleware va ANTES de declarar las rutas /api,
+// así garantizamos que toda petición a /api/* espere la conexión a Mongo
+// antes de llegar a su controlador correspondiente.
 app.use('/api', async (req, res, next) => {
   try {
     await conectarDB();
@@ -65,6 +51,22 @@ app.use('/api', async (req, res, next) => {
       error: error.message
     });
   }
+});
+
+// Rutas (ahora sí, después del middleware de conexión)
+const ticketRoutes = require('./routes/tickets');
+app.use('/api/tickets', ticketRoutes);
+
+// Ruta de prueba para verificar que el servidor y la BD funcionan
+app.get('/api/health', (req, res) => {
+  const estados = ['desconectado', 'conectado', 'conectando', 'desconectando'];
+  res.json({
+    status: 'OK',
+    mensaje: 'Help Desk Inteligente funcionando correctamente',
+    dbState: mongoose.connection.readyState,
+    dbEstadoTexto: estados[mongoose.connection.readyState],
+    fecha: new Date().toISOString()
+  });
 });
 
 // Solo levantar el servidor con app.listen si se ejecuta localmente
